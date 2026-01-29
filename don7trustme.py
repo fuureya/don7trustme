@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from skull import SKULL
-from services import ssh_service, port_service, firewall_service
+from services import ssh_service, port_service, firewall_service, ip_service
 
 console = Console()
 
@@ -157,23 +157,36 @@ def kelola_ip():
 
         console.print(
             Panel(
-                "[bold green]Manage IP[/bold green]\n\n"
+                f"[bold green]Manage IP[/bold green] (Firewall: {firewall_type})\n\n"
                 "[cyan]1.[/cyan] Cek IP Lokal\n"
                 "[cyan]2.[/cyan] Cek IP Publik\n"
-                "[cyan]3.[/cyan] Kembali",
+                "[cyan]3.[/cyan] Allow Access IP (IN/OUT/FWD)\n"
+                "[cyan]4.[/cyan] Blokir IP\n"
+                "[cyan]5.[/cyan] Kembali",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4/5): [/bold magenta]")
 
         if choice == "1":
-            console.print("[bold blue]IP Lokal: 127.0.0.1 (dummy)[/bold blue]")
+            console.print(f"[bold blue]IP Lokal: {ip_service.get_local_ip()}[/bold blue]")
             pause()
         elif choice == "2":
-            console.print("[bold blue]IP Publik: 0.0.0.0 (dummy)[/bold blue]")
+            console.print("[bold blue]Sedang mengambil IP Publik...[/bold blue]")
+            console.print(f"[bold blue]IP Publik: {ip_service.get_public_ip()}[/bold blue]")
             pause()
         elif choice == "3":
+            ip = console.input("[bold yellow]Masukkan IP yang ingin diizinkan: [/bold yellow]")
+            if ip:
+                ip_service.allow_ip(ip, firewall_type)
+            pause()
+        elif choice == "4":
+            ip = console.input("[bold yellow]Masukkan IP yang ingin diblokir: [/bold yellow]")
+            if ip:
+                ip_service.block_ip(ip, firewall_type)
+            pause()
+        elif choice == "5":
             break
         else:
             console.print("[bold red]Pilihan tidak valid![/bold red]")
