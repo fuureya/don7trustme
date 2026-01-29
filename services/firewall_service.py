@@ -41,6 +41,36 @@ def save_iptables_rules():
         console.print(f"[bold red]Gagal menyimpan aturan Iptables: {e}[/bold red]")
         return False
 
+def enable_nmap_protection(firewall_type):
+    """Menambahkan aturan untuk memperlambat dan memitigasi scanning port (Nmap)."""
+    try:
+        console.print("[bold yellow]Menerapkan proteksi scan Nmap...[/bold yellow]")
+        
+        # Aturan umum menggunakan iptables (berlaku juga untuk sistem dengan UFW)
+        rules = [
+            # Blokir NULL scans
+            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "DROP"],
+            # Blokir Xmas scans
+            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "DROP"],
+            # Blokir FIN scans
+            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN", "-j", "DROP"],
+            # Rate limit koneksi baru (memperlambat scan)
+            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "-m", "state", "--state", "NEW", "-m", "recent", "--set"],
+            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "-m", "state", "--state", "NEW", "-m", "recent", "--update", "--seconds", "60", "--hitcount", "10", "-j", "DROP"]
+        ]
+
+        for rule in rules:
+            subprocess.run(rule, check=True)
+
+        if firewall_type == "IPTABLES":
+            save_iptables_rules()
+        
+        console.print("[bold green]Proteksi scan Nmap berhasil diaktifkan.[/bold green]")
+        return True
+    except Exception as e:
+        console.print(f"[bold red]Gagal mengaktifkan proteksi: {e}[/bold red]")
+        return False
+
 def get_firewall_status_message(firewall_type):
     if firewall_type == "UFW":
         return "[bold green]Sistem mendeteksi penggunaan UFW (Uncomplicated Firewall).[/bold green]"

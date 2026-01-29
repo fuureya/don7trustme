@@ -80,13 +80,14 @@ def kelola_port():
                 f"[bold green]Manage Port[/bold green] (Firewall: {firewall_type})\n\n"
                 "[cyan]1.[/cyan] Scan Port Aktif\n"
                 "[cyan]2.[/cyan] Tutup Port Aktif\n"
-                "[cyan]3.[/cyan] Aktifkan Port\n"
-                "[cyan]4.[/cyan] Kembali",
+                "[cyan]3.[/cyan] Proteksi Scan Nmap\n"
+                "[cyan]4.[/cyan] Aktifkan Port\n"
+                "[cyan]5.[/cyan] Kembali",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Pilih (1/2/3/4): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4/5): [/bold magenta]")
 
         if choice == "1":
             console.print("[bold blue]Memindai port aktif...[/bold blue]")
@@ -122,6 +123,18 @@ def kelola_port():
                 console.print("[bold red]Masukkan angka![/bold red]")
                 pause()
         elif choice == "3":
+            console.print(Panel(
+                "[bold yellow]INFO:[/bold yellow]\n"
+                "Proses ini [bold red]tidak 100%[/bold red] menjadi anti scan,\n"
+                "tapi memperlambat scan untuk orang mendapatkan informasi server anda.",
+                width=50,
+                border_style="yellow"
+            ))
+            confirm = console.input("[bold yellow]Aktifkan proteksi ini? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                firewall_service.enable_nmap_protection(firewall_type)
+            pause()
+        elif choice == "4":
             new_port = console.input("[bold yellow]Masukkan port yang ingin diaktifkan (ketik 'cancel' untuk batal): [/bold yellow]")
             if new_port.lower() == 'cancel':
                 console.print("[bold cyan]Proses aktivasi port dibatalkan.[/bold cyan]")
@@ -130,7 +143,7 @@ def kelola_port():
             else:
                 console.print("[bold red]Port harus berupa angka atau ketik 'cancel'![/bold red]")
             pause()
-        elif choice == "4":
+        elif choice == "5":
             break
         else:
             console.print("[bold red]Pilihan tidak valid![/bold red]")
