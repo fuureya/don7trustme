@@ -122,11 +122,13 @@ def kelola_port():
                 console.print("[bold red]Masukkan angka![/bold red]")
                 pause()
         elif choice == "3":
-            new_port = console.input("[bold yellow]Masukkan port yang ingin diaktifkan (buka): [/bold yellow]")
-            if new_port.isdigit():
+            new_port = console.input("[bold yellow]Masukkan port yang ingin diaktifkan (ketik 'cancel' untuk batal): [/bold yellow]")
+            if new_port.lower() == 'cancel':
+                console.print("[bold cyan]Proses aktivasi port dibatalkan.[/bold cyan]")
+            elif new_port.isdigit():
                 port_service.open_port(new_port, firewall_type)
             else:
-                console.print("[bold red]Port harus berupa angka![/bold red]")
+                console.print("[bold red]Port harus berupa angka atau ketik 'cancel'![/bold red]")
             pause()
         elif choice == "4":
             break
