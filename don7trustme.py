@@ -237,11 +237,12 @@ def kelola_user_access():
                 "[bold green]User & Access Control[/bold green]\n\n"
                 "[cyan]1.[/cyan] Account Locking (pam_faillock)\n"
                 "[cyan]2.[/cyan] Restrict /etc/shadow\n"
-                "[cyan]3.[/cyan] Kembali",
+                "[cyan]3.[/cyan] Setup Fail2Ban (SSH Anti Brute-force)\n"
+                "[cyan]4.[/cyan] Kembali",
                 width=50
             )
         )
-        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4): [/bold magenta]")
 
         if choice == "1":
             console.print(Panel(
@@ -267,6 +268,8 @@ def kelola_user_access():
                 user_service.restrict_shadow_file()
             pause()
         elif choice == "3":
+            setup_fail2ban()
+        elif choice == "4":
             break
 
 def kelola_audit_monitoring():
@@ -408,16 +411,15 @@ def main():
                 "[cyan]1.[/cyan] SSH Hardening\n"
                 "[cyan]2.[/cyan] Manage Port\n"
                 "[cyan]3.[/cyan] Manage IP\n"
-                "[cyan]4.[/cyan] Setup Fail2Ban\n"
-                "[cyan]5.[/cyan] User Access Control\n"
-                "[cyan]6.[/cyan] Audit & Monitoring\n"
-                "[cyan]7.[/cyan] Scanners (Malware/Audit)\n"
-                "[cyan]8.[/cyan] Keluar",
+                "[cyan]4.[/cyan] User Access Control\n"
+                "[cyan]5.[/cyan] Audit & Monitoring\n"
+                "[cyan]6.[/cyan] Scanners (Malware/Audit)\n"
+                "[cyan]7.[/cyan] Keluar",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Masukkan pilihan (1-8): [/bold magenta]")
+        choice = console.input("[bold magenta]Masukkan pilihan (1-7): [/bold magenta]")
 
         if choice == "1":
             kelola_ssh()
@@ -426,14 +428,12 @@ def main():
         elif choice == "3":
             kelola_ip()
         elif choice == "4":
-            setup_fail2ban()
-        elif choice == "5":
             kelola_user_access()
-        elif choice == "6":
+        elif choice == "5":
             kelola_audit_monitoring()
-        elif choice == "7":
+        elif choice == "6":
             kelola_scanners()
-        elif choice == "8":
+        elif choice == "7":
             console.print(
                 Panel(
                     "[bold red]Terima kasih telah menggunakan Don7trustme Tools[/bold red]",
