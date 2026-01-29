@@ -179,12 +179,18 @@ def kelola_ip():
         elif choice == "3":
             ip = console.input("[bold yellow]Masukkan IP yang ingin diizinkan: [/bold yellow]")
             if ip:
-                ip_service.allow_ip(ip, firewall_type)
+                if ip_service.validate_ip(ip):
+                    ip_service.allow_ip(ip, firewall_type)
+                else:
+                    console.print("[bold red]Format IP tidak sesuai![/bold red]")
             pause()
         elif choice == "4":
             ip = console.input("[bold yellow]Masukkan IP yang ingin diblokir: [/bold yellow]")
             if ip:
-                ip_service.block_ip(ip, firewall_type)
+                if ip_service.validate_ip(ip):
+                    ip_service.block_ip(ip, firewall_type)
+                else:
+                    console.print("[bold red]Format IP tidak sesuai![/bold red]")
             pause()
         elif choice == "5":
             break

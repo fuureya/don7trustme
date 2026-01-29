@@ -1,10 +1,19 @@
 import socket
 import subprocess
 import urllib.request
+import ipaddress
 from rich.console import Console
 from services import firewall_service
 
 console = Console()
+
+def validate_ip(ip):
+    """Memvalidasi apakah input adalah format IP yang benar (IPv4/IPv6)."""
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
 
 def get_local_ip():
     """Mengambil IP lokal sistem."""
