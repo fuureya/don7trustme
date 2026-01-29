@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from skull import SKULL
-from services import ssh_service, port_service, firewall_service, ip_service
+from services import ssh_service, port_service, firewall_service, ip_service, fail2ban_service
 
 console = Console()
 
@@ -199,6 +199,35 @@ def kelola_ip():
             pause()
 
 
+
+def setup_fail2ban():
+    clear_screen()
+    header()
+    console.print(Panel("[bold green]Setup Fail2Ban (SSH Anti Brute-force)[/bold green]", width=50))
+    
+    if not fail2ban_service.is_fail2ban_installed():
+        console.print("[bold red]Fail2Ban belum terinstall pada sistem ini.[/bold red]")
+        confirm = console.input("[bold yellow]Ingin menginstal Fail2Ban sekarang? (y/n): [/bold yellow]")
+        if confirm.lower() == 'y':
+            if not fail2ban_service.install_fail2ban():
+                pause()
+                return
+        else:
+            return
+
+    console.print("\n[bold cyan]Konfigurasi Jails SSH:[/bold cyan]")
+    retry = console.input("[bold yellow]Masukkan Max Retry (default 5): [/bold yellow]") or "5"
+    btime = console.input("[bold yellow]Masukkan Ban Time (cth: 1h, 1d, 10m - default 1h): [/bold yellow]") or "1h"
+    ignore = console.input("[bold yellow]IP tambahan untuk di-ignore (kosongkan jika tidak ada): [/bold yellow]")
+    
+    if ignore and not ip_service.validate_ip(ignore):
+        console.print("[bold red]Format IP tambahan tidak valid! Mengabaikan IP tambahan.[/bold red]")
+        ignore = None
+
+    fail2ban_service.setup_fail2ban_ssh(max_retry=retry, ban_time=btime, ignore_ip=ignore)
+    pause()
+
+
 def main():
     global firewall_type
     
@@ -235,12 +264,13 @@ def main():
                 "[cyan]1.[/cyan] SSH Hardening\n"
                 "[cyan]2.[/cyan] Manage Port\n"
                 "[cyan]3.[/cyan] Manage IP\n"
-                "[cyan]4.[/cyan] Keluar",
+                "[cyan]4.[/cyan] Setup Fail2Ban\n"
+                "[cyan]5.[/cyan] Keluar",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Masukkan pilihan (1/2/3/4): [/bold magenta]")
+        choice = console.input("[bold magenta]Masukkan pilihan (1/2/3/4/5): [/bold magenta]")
 
         if choice == "1":
             kelola_ssh()
@@ -249,6 +279,8 @@ def main():
         elif choice == "3":
             kelola_ip()
         elif choice == "4":
+            setup_fail2ban()
+        elif choice == "5":
             console.print(
                 Panel(
                     "[bold red]Terima kasih telah menggunakan Don7trustme Tools[/bold red]",
