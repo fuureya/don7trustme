@@ -3,12 +3,13 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from skull import SKULL
-from services import ssh_service, port_service
+from services import ssh_service, port_service, firewall_service
 
 console = Console()
 
-# Global state to store scanned ports
+# Global state
 scanned_ports_cache = []
+firewall_type = "UNKNOWN"
 
 
 def clear_screen():
@@ -39,7 +40,7 @@ def kelola_ssh():
 
         console.print(
             Panel(
-                "[bold green]SSH Hardening[/bold green]\n\n"
+                f"[bold green]SSH Hardening[/bold green] (Firewall: {firewall_type})\n\n"
                 "[cyan]1.[/cyan] Matikan Root Login\n"
                 "[cyan]2.[/cyan] Ganti Port SSH\n"
                 "[cyan]3.[/cyan] Kembali",
@@ -76,15 +77,16 @@ def kelola_port():
 
         console.print(
             Panel(
-                "[bold green]Manage Port[/bold green]\n\n"
+                f"[bold green]Manage Port[/bold green] (Firewall: {firewall_type})\n\n"
                 "[cyan]1.[/cyan] Scan Port Aktif\n"
                 "[cyan]2.[/cyan] Tutup Port Aktif\n"
-                "[cyan]3.[/cyan] Kembali",
+                "[cyan]3.[/cyan] Aktifkan Port\n"
+                "[cyan]4.[/cyan] Kembali",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4): [/bold magenta]")
 
         if choice == "1":
             console.print("[bold blue]Memindai port aktif...[/bold blue]")
@@ -108,7 +110,7 @@ def kelola_port():
                     port_to_close = scanned_ports_cache[idx-1]
                     confirm = console.input(f"[bold yellow]Yakin ingin menutup port {port_to_close}? (y/n): [/bold yellow]")
                     if confirm.lower() == 'y':
-                        port_service.close_port(port_to_close)
+                        port_service.close_port(port_to_close, firewall_type)
                         # Refresh cache setelah menutup port
                         console.print("[bold blue]Memperbarui daftar port...[/bold blue]")
                         scanned_ports_cache = port_service.get_active_ports()
@@ -120,6 +122,13 @@ def kelola_port():
                 console.print("[bold red]Masukkan angka![/bold red]")
                 pause()
         elif choice == "3":
+            new_port = console.input("[bold yellow]Masukkan port yang ingin diaktifkan (buka): [/bold yellow]")
+            if new_port.isdigit():
+                port_service.open_port(new_port, firewall_type)
+            else:
+                console.print("[bold red]Port harus berupa angka![/bold red]")
+            pause()
+        elif choice == "4":
             break
         else:
             console.print("[bold red]Pilihan tidak valid![/bold red]")
@@ -157,6 +166,31 @@ def kelola_ip():
 
 
 def main():
+    global firewall_type
+    
+    # Firewall Analysis System State pada Startup
+    clear_screen()
+    header()
+    console.print(Panel("[bold cyan]Menjalankan Analisis Sistem...[/bold cyan]", width=50))
+    firewall_type = firewall_service.detect_firewall()
+    console.print(firewall_service.get_firewall_status_message(firewall_type))
+    
+    if firewall_type == "IPTABLES":
+        if not firewall_service.check_iptables_persistent():
+            console.print()
+            console.print(Panel(
+                "[bold red]PERINGATAN:[/bold red]\n"
+                "Package [bold yellow]iptables-persistent[/bold yellow] tidak terdeteksi.\n"
+                "Silakan install dlu package yang di perlukan:\n"
+                "[cyan]sudo apt install iptables-persistent[/cyan]\n"
+                "agar aturan firewall bersifat [bold green]PERMANEN[/bold green] setelah reboot.",
+                border_style="red",
+                width=52
+            ))
+    
+    console.print()
+    pause()
+
     while True:
         clear_screen()
         header()

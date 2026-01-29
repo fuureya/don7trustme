@@ -1,6 +1,7 @@
 import subprocess
 from rich.console import Console
 from rich.table import Table
+from services import firewall_service
 
 console = Console()
 
@@ -28,24 +29,48 @@ def get_active_ports():
         console.print(f"[bold red]Gagal memindai port: {e}[/bold red]")
         return []
 
-def close_port(port):
-    """Menutup akses port menggunakan UFW."""
+def close_port(port, firewall_type):
+    """Menutup akses port menggunakan firewall yang terdeteksi."""
     try:
-        # Mencoba menggunakan UFW (Uncomplicated Firewall) yang umum di Linux
-        console.print(f"[bold yellow]Mencoba menutup port {port} menggunakan UFW...[/bold yellow]")
-        subprocess.run(["sudo", "ufw", "deny", port], check=True)
-        console.print(f"[bold green]Berhasil menutup akses ke port {port} melalui UFW.[/bold green]")
-        return True
-    except subprocess.CalledProcessError:
-        # Jika UFW gagal, coba iptables sebagai alternatif
-        try:
-            console.print(f"[bold yellow]UFW gagal, mencoba menggunakan iptables untuk memblokir port {port}...[/bold yellow]")
+        if firewall_type == "UFW":
+            console.print(f"[bold yellow]Menutup port {port} menggunakan UFW...[/bold yellow]")
+            subprocess.run(["sudo", "ufw", "deny", port], check=True)
+        elif firewall_type == "IPTABLES":
+            console.print(f"[bold yellow]Menutup port {port} menggunakan Iptables...[/bold yellow]")
             subprocess.run(["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--destination-port", port, "-j", "DROP"], check=True)
-            console.print(f"[bold green]Berhasil memblokir port {port} melalui iptables.[/bold green]")
-            return True
-        except subprocess.CalledProcessError:
-            console.print(f"[bold red]Gagal menutup port. Pastikan Anda memiliki hak akses sudo dan memiliki UFW atau iptables terinstall.[/bold red]")
+            firewall_service.save_iptables_rules()
+        else:
+            console.print("[bold red]Tipe firewall tidak didukung or tidak terdeteksi.[/bold red]")
             return False
+            
+        console.print(f"[bold green]Berhasil menutup akses ke port {port}.[/bold green]")
+        return True
+    except subprocess.CalledProcessError as e:
+        console.print(f"[bold red]Gagal menutup port: {e}[/bold red]")
+        return False
+    except Exception as e:
+        console.print(f"[bold red]Terjadi kesalahan: {e}[/bold red]")
+        return False
+
+def open_port(port, firewall_type):
+    """Membuka akses port menggunakan firewall yang terdeteksi."""
+    try:
+        if firewall_type == "UFW":
+            console.print(f"[bold yellow]Membuka port {port} menggunakan UFW...[/bold yellow]")
+            subprocess.run(["sudo", "ufw", "allow", port], check=True)
+        elif firewall_type == "IPTABLES":
+            console.print(f"[bold yellow]Membuka port {port} menggunakan Iptables...[/bold yellow]")
+            subprocess.run(["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--destination-port", port, "-j", "ACCEPT"], check=True)
+            firewall_service.save_iptables_rules()
+        else:
+            console.print("[bold red]Tipe firewall tidak didukung or tidak terdeteksi.[/bold red]")
+            return False
+            
+        console.print(f"[bold green]Berhasil membuka akses ke port {port}.[/bold green]")
+        return True
+    except subprocess.CalledProcessError as e:
+        console.print(f"[bold red]Gagal membuka port: {e}[/bold red]")
+        return False
     except Exception as e:
         console.print(f"[bold red]Terjadi kesalahan: {e}[/bold red]")
         return False
