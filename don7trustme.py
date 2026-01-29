@@ -273,22 +273,29 @@ def kelola_audit_monitoring():
     while True:
         clear_screen()
         header()
+        
+        audit_status = " [bold green](Sudah terinstal)[/bold green]" if audit_service.is_auditd_installed() else ""
+        logwatch_status = " [bold green](Sudah terinstal)[/bold green]" if audit_service.is_logwatch_installed() else ""
+
         console.print(
             Panel(
                 "[bold green]Audit & Monitoring[/bold green]\n\n"
-                "[cyan]1.[/cyan] Setup Auditd\n"
-                "[cyan]2.[/cyan] Setup Logwatch\n"
-                "[cyan]3.[/cyan] Kembali",
+                f"[cyan]1.[/cyan] Setup Auditd{audit_status}\n"
+                f"[cyan]2.[/cyan] Setup Logwatch{logwatch_status}\n"
+                "[cyan]3.[/cyan] Lihat Log Auditd (Hari Ini)\n"
+                "[cyan]4.[/cyan] Lihat Logwatch Report\n"
+                "[cyan]5.[/cyan] Kembali",
                 width=50
             )
         )
-        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4/5): [/bold magenta]")
 
         if choice == "1":
             console.print(Panel(
                 "[bold cyan]FITUR: Auditd Setup[/bold cyan]\n"
                 "Mencatat setiap ada perubahan pada file sensitif seperti\n"
-                "/etc/passwd atau /etc/ssh/sshd_config secara real-time.",
+                "/etc/passwd atau /etc/ssh/sshd_config secara real-time.\n"
+                "Log dicatat oleh sistem di: [bold yellow]/var/log/audit/audit.log[/bold yellow]",
                 border_style="cyan"
             ))
             confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
@@ -299,7 +306,8 @@ def kelola_audit_monitoring():
             console.print(Panel(
                 "[bold cyan]FITUR: Logwatch Setup[/bold cyan]\n"
                 "Membuat rangkuman aktivitas log sistem setiap harinya.\n"
-                "Membantu mas memantau aktivitas mencurigakan dengan mudah.",
+                "Report harian akan dikirim ke: [bold yellow]stdout / log sistem internal[/bold yellow].\n"
+                "Mas bisa liat langsung rangkumannya di opsi nomor 4.",
                 border_style="cyan"
             ))
             confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
@@ -307,6 +315,20 @@ def kelola_audit_monitoring():
                 audit_service.setup_logwatch()
             pause()
         elif choice == "3":
+            if not audit_service.is_auditd_installed():
+                console.print("[bold red]Auditd belum terinstall! Silakan pilih opsi 1 dlu.[/bold red]")
+            else:
+                logs = audit_service.get_audit_logs()
+                console.print(Panel(logs, title="[bold yellow]Audit Logs (Configuration Changes)[/bold yellow]"))
+            pause()
+        elif choice == "4":
+            if not audit_service.is_logwatch_installed():
+                console.print("[bold red]Logwatch belum terinstall! Silakan pilih opsi 2 dlu.[/bold red]")
+            else:
+                report = audit_service.get_logwatch_report()
+                console.print(Panel(report, title="[bold yellow]Logwatch Daily Report[/bold yellow]"))
+            pause()
+        elif choice == "5":
             break
 
 def kelola_scanners():

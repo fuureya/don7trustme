@@ -46,3 +46,33 @@ def setup_logwatch():
     except Exception as e:
         console.print(f"[bold red]Gagal menginstal Logwatch: {e}[/bold red]")
         return False
+
+def is_auditd_installed():
+    """Mengecek apakah auditd terinstall."""
+    return os.path.exists("/usr/sbin/auditd")
+
+def is_logwatch_installed():
+    """Mengecek apakah logwatch terinstall."""
+    return os.path.exists("/usr/sbin/logwatch")
+
+def get_audit_logs(limit=10):
+    """Membaca log audit terbaru menggunakan ausearch."""
+    try:
+        # Mencari event audit terbaru
+        result = subprocess.run(["sudo", "ausearch", "-m", "CONFIG_CHANGE", "-i", "--start", "today"], capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout:
+            return result.stdout
+        return "Belum ada log audit perubahan konfigurasi untuk hari ini."
+    except Exception as e:
+        return f"Gagal membaca log audit: {e}"
+
+def get_logwatch_report():
+    """Menghasilkan report logwatch instan untuk hari ini."""
+    try:
+        console.print("[bold yellow]Sedang mengolah data log (mungkin butuh waktu)...[/bold yellow]")
+        result = subprocess.run(["sudo", "logwatch", "--detail", "low", "--range", "today", "--output", "stdout"], capture_output=True, text=True)
+        if result.returncode == 0:
+            return result.stdout
+        return "Gagal menghasilkan report Logwatch."
+    except Exception as e:
+        return f"Error: {e}"
