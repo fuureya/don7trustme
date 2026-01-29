@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from skull import SKULL
-from services import ssh_service, port_service, firewall_service, ip_service, fail2ban_service
+from services import ssh_service, port_service, firewall_service, ip_service, fail2ban_service, user_service, audit_service, scanner_service
 
 console = Console()
 
@@ -228,6 +228,128 @@ def setup_fail2ban():
     pause()
 
 
+def kelola_user_access():
+    while True:
+        clear_screen()
+        header()
+        console.print(
+            Panel(
+                "[bold green]User & Access Control[/bold green]\n\n"
+                "[cyan]1.[/cyan] Account Locking (pam_faillock)\n"
+                "[cyan]2.[/cyan] Restrict /etc/shadow\n"
+                "[cyan]3.[/cyan] Kembali",
+                width=50
+            )
+        )
+        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+
+        if choice == "1":
+            console.print(Panel(
+                "[bold cyan]FITUR: Account Locking (pam_faillock)[/bold cyan]\n"
+                "Mengunci akun secara otomatis jika gagal login sebanyak [bold red]5 kali[/bold red].\n"
+                "Akun akan dikunci selama [bold red]15 menit[/bold red] (900 detik).\n"
+                "Ini mencegah serangan brute-force pada password linux mas.",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                user_service.setup_account_locking()
+            pause()
+        elif choice == "2":
+            console.print(Panel(
+                "[bold cyan]FITUR: Restrict /etc/shadow[/bold cyan]\n"
+                "Memastikan file /etc/shadow (yang berisi hash password)\n"
+                "hanya bisa dibaca oleh user root. Sangat krusial buat keamanan!",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                user_service.restrict_shadow_file()
+            pause()
+        elif choice == "3":
+            break
+
+def kelola_audit_monitoring():
+    while True:
+        clear_screen()
+        header()
+        console.print(
+            Panel(
+                "[bold green]Audit & Monitoring[/bold green]\n\n"
+                "[cyan]1.[/cyan] Setup Auditd\n"
+                "[cyan]2.[/cyan] Setup Logwatch\n"
+                "[cyan]3.[/cyan] Kembali",
+                width=50
+            )
+        )
+        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+
+        if choice == "1":
+            console.print(Panel(
+                "[bold cyan]FITUR: Auditd Setup[/bold cyan]\n"
+                "Mencatat setiap ada perubahan pada file sensitif seperti\n"
+                "/etc/passwd atau /etc/ssh/sshd_config secara real-time.",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                audit_service.setup_auditd()
+            pause()
+        elif choice == "2":
+            console.print(Panel(
+                "[bold cyan]FITUR: Logwatch Setup[/bold cyan]\n"
+                "Membuat rangkuman aktivitas log sistem setiap harinya.\n"
+                "Membantu mas memantau aktivitas mencurigakan dengan mudah.",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                audit_service.setup_logwatch()
+            pause()
+        elif choice == "3":
+            break
+
+def kelola_scanners():
+    while True:
+        clear_screen()
+        header()
+        console.print(
+            Panel(
+                "[bold green]Malware & Vulnerability Detection[/bold green]\n\n"
+                "[cyan]1.[/cyan] Rootkit Hunter (rkhunter)\n"
+                "[cyan]2.[/cyan] Lynis Security Audit\n"
+                "[cyan]3.[/cyan] Kembali",
+                width=50
+            )
+        )
+        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+
+        if choice == "1":
+            console.print(Panel(
+                "[bold cyan]FITUR: Rootkit Hunter[/bold cyan]\n"
+                "Scan sistem untuk mendeteksi rootkits, backdoors,\n"
+                "dan eksploitasi lokal lainnya yang berbahaya.",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                scanner_service.setup_rkhunter()
+            pause()
+        elif choice == "2":
+            console.print(Panel(
+                "[bold cyan]FITUR: Lynis Integration[/bold cyan]\n"
+                "Melakukan audit keamanan sistem secara mendalam dan\n"
+                "menampilkan 'Hardening Index' (Skor Keamanan) server mas.",
+                border_style="cyan"
+            ))
+            confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
+            if confirm.lower() == 'y':
+                scanner_service.run_lynis_scan()
+            pause()
+        elif choice == "3":
+            break
+
+
 def main():
     global firewall_type
     
@@ -265,12 +387,15 @@ def main():
                 "[cyan]2.[/cyan] Manage Port\n"
                 "[cyan]3.[/cyan] Manage IP\n"
                 "[cyan]4.[/cyan] Setup Fail2Ban\n"
-                "[cyan]5.[/cyan] Keluar",
+                "[cyan]5.[/cyan] User Access Control\n"
+                "[cyan]6.[/cyan] Audit & Monitoring\n"
+                "[cyan]7.[/cyan] Scanners (Malware/Audit)\n"
+                "[cyan]8.[/cyan] Keluar",
                 width=50
             )
         )
 
-        choice = console.input("[bold magenta]Masukkan pilihan (1/2/3/4/5): [/bold magenta]")
+        choice = console.input("[bold magenta]Masukkan pilihan (1-8): [/bold magenta]")
 
         if choice == "1":
             kelola_ssh()
@@ -281,6 +406,12 @@ def main():
         elif choice == "4":
             setup_fail2ban()
         elif choice == "5":
+            kelola_user_access()
+        elif choice == "6":
+            kelola_audit_monitoring()
+        elif choice == "7":
+            kelola_scanners()
+        elif choice == "8":
             console.print(
                 Panel(
                     "[bold red]Terima kasih telah menggunakan Don7trustme Tools[/bold red]",
