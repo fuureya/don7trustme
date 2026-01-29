@@ -3,9 +3,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from skull import SKULL
-import ssh_manager
+from services import ssh_service, port_service
 
 console = Console()
+
+# Global state to store scanned ports
+scanned_ports_cache = []
 
 
 def clear_screen():
@@ -49,12 +52,12 @@ def kelola_ssh():
         if choice == "1":
             confirm = console.input("[bold yellow]Apakah Anda yakin ingin mematikan Root Login? (y/n): [/bold yellow]")
             if confirm.lower() == 'y':
-                ssh_manager.disable_root_login()
+                ssh_service.disable_root_login()
             pause()
         elif choice == "2":
             port = console.input("[bold yellow]Masukkan port baru yang Anda inginkan: [/bold yellow]")
             if port.isdigit():
-                ssh_manager.change_ssh_port(port)
+                ssh_service.change_ssh_port(port)
             else:
                 console.print("[bold red]Port harus berupa angka![/bold red]")
             pause()
@@ -66,6 +69,7 @@ def kelola_ssh():
 
 
 def kelola_port():
+    global scanned_ports_cache
     while True:
         clear_screen()
         header()
@@ -73,8 +77,8 @@ def kelola_port():
         console.print(
             Panel(
                 "[bold green]Manage Port[/bold green]\n\n"
-                "[cyan]1.[/cyan] Scan Port\n"
-                "[cyan]2.[/cyan] Buka Port (dummy)\n"
+                "[cyan]1.[/cyan] Scan Port Aktif\n"
+                "[cyan]2.[/cyan] Tutup Port Aktif\n"
                 "[cyan]3.[/cyan] Kembali",
                 width=50
             )
@@ -83,11 +87,38 @@ def kelola_port():
         choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
 
         if choice == "1":
-            console.print("[bold blue]Fitur scan port belum diimplementasikan.[/bold blue]")
+            console.print("[bold blue]Memindai port aktif...[/bold blue]")
+            scanned_ports_cache = port_service.get_active_ports()
+            port_service.display_ports_table(scanned_ports_cache)
             pause()
         elif choice == "2":
-            console.print("[bold blue]Fitur buka port belum diimplementasikan.[/bold blue]")
-            pause()
+            if not scanned_ports_cache:
+                console.print("[bold red]Anda harus melakukan Scan Port Aktif (Opsi 1) terlebih dahulu![/bold red]")
+                pause()
+                continue
+            
+            port_service.display_ports_table(scanned_ports_cache)
+            idx_input = console.input("[bold magenta]Pilih nomor port yang ingin ditutup (0 untuk batal): [/bold magenta]")
+            
+            if idx_input.isdigit():
+                idx = int(idx_input)
+                if idx == 0:
+                    continue
+                if 1 <= idx <= len(scanned_ports_cache):
+                    port_to_close = scanned_ports_cache[idx-1]
+                    confirm = console.input(f"[bold yellow]Yakin ingin menutup port {port_to_close}? (y/n): [/bold yellow]")
+                    if confirm.lower() == 'y':
+                        port_service.close_port(port_to_close)
+                        # Refresh cache setelah menutup port
+                        console.print("[bold blue]Memperbarui daftar port...[/bold blue]")
+                        scanned_ports_cache = port_service.get_active_ports()
+                    pause()
+                else:
+                    console.print("[bold red]Nomor tidak valid![/bold red]")
+                    pause()
+            else:
+                console.print("[bold red]Masukkan angka![/bold red]")
+                pause()
         elif choice == "3":
             break
         else:
