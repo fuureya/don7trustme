@@ -21,7 +21,7 @@ def header():
     console.print(
         Align.left(
             Panel(
-                "[bold yellow]Don7trustme Firewall Tools[/bold yellow]",
+                "[bold yellow]Don7trustme Firewall Tools & Linux Hardening[/bold yellow]",
                 width=50
             )
         )
@@ -338,22 +338,29 @@ def kelola_scanners():
     while True:
         clear_screen()
         header()
+        
+        rk_status = " [bold green](Sudah terinstal)[/bold green]" if scanner_service.is_rkhunter_installed() else ""
+        lynis_status = " [bold green](Sudah terinstal)[/bold green]" if scanner_service.is_lynis_installed() else ""
+
         console.print(
             Panel(
                 "[bold green]Malware & Vulnerability Detection[/bold green]\n\n"
-                "[cyan]1.[/cyan] Rootkit Hunter (rkhunter)\n"
-                "[cyan]2.[/cyan] Lynis Security Audit\n"
-                "[cyan]3.[/cyan] Kembali",
+                f"[cyan]1.[/cyan] Rootkit Hunter (rkhunter){rk_status}\n"
+                f"[cyan]2.[/cyan] Lynis Security Audit{lynis_status}\n"
+                "[cyan]3.[/cyan] Lihat Hasil Scan Rkhunter\n"
+                "[cyan]4.[/cyan] Lihat Skor Keamanan Lynis\n"
+                "[cyan]5.[/cyan] Kembali",
                 width=50
             )
         )
-        choice = console.input("[bold magenta]Pilih (1/2/3): [/bold magenta]")
+        choice = console.input("[bold magenta]Pilih (1/2/3/4/5): [/bold magenta]")
 
         if choice == "1":
             console.print(Panel(
                 "[bold cyan]FITUR: Rootkit Hunter[/bold cyan]\n"
                 "Scan sistem untuk mendeteksi rootkits, backdoors,\n"
-                "dan eksploitasi lokal lainnya yang berbahaya.",
+                "dan eksploitasi lokal lainnya yang berbahaya.\n"
+                "Log lengkap ada di: [bold yellow]/var/log/rkhunter.log[/bold yellow]",
                 border_style="cyan"
             ))
             confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
@@ -364,7 +371,8 @@ def kelola_scanners():
             console.print(Panel(
                 "[bold cyan]FITUR: Lynis Integration[/bold cyan]\n"
                 "Melakukan audit keamanan sistem secara mendalam dan\n"
-                "menampilkan 'Hardening Index' (Skor Keamanan) server mas.",
+                "menampilkan 'Hardening Index' (Skor Keamanan) server mas.\n"
+                "Laporan detail di: [bold yellow]/var/log/lynis.log[/bold yellow]",
                 border_style="cyan"
             ))
             confirm = console.input("[bold yellow]Yakin ingin lanjut? (y/n): [/bold yellow]")
@@ -372,6 +380,20 @@ def kelola_scanners():
                 scanner_service.run_lynis_scan()
             pause()
         elif choice == "3":
+            if not scanner_service.is_rkhunter_installed():
+                console.print("[bold red]Rkhunter belum terinstall! Silakan pilih opsi 1 dlu.[/bold red]")
+            else:
+                log = scanner_service.get_rkhunter_log()
+                console.print(Panel(log, title="[bold yellow]Rkhunter Scan Summary[/bold yellow]"))
+            pause()
+        elif choice == "4":
+            if not scanner_service.is_lynis_installed():
+                console.print("[bold red]Lynis belum terinstall! Silakan pilih opsi 2 dlu.[/bold red]")
+            else:
+                report = scanner_service.get_lynis_report()
+                console.print(Panel(report, title="[bold yellow]Lynis Hardening Score[/bold yellow]"))
+            pause()
+        elif choice == "5":
             break
 
 
